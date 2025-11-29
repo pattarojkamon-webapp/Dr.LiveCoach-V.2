@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { AppConfig, ChatMessage, EvaluationResult, Role } from "../types";
 import { MOCK_EVALUATION } from "../constants";
@@ -5,18 +6,23 @@ import { MOCK_EVALUATION } from "../constants";
 // SAFELY ACCESS API KEY
 const getApiKey = () => {
   try {
-    // Check global process first (polyfilled in index.html)
-    if (typeof process !== 'undefined' && process.env) {
-      return process.env.API_KEY || '';
+    // 1. Check window.process (browser polyfill)
+    if (typeof window !== 'undefined' && (window as any).process?.env?.API_KEY) {
+      return (window as any).process.env.API_KEY;
+    }
+    // 2. Check global process (if defined via var/const)
+    // @ts-ignore
+    if (typeof process !== 'undefined' && process.env?.API_KEY) {
+      // @ts-ignore
+      return process.env.API_KEY;
     }
   } catch (e) {
-    console.warn("Could not access process.env");
+    console.warn("Could not access API Key safely:", e);
   }
   return '';
 };
 
 // Lazy Initialization of AI Client
-// We do NOT create the client at the top level to prevent module loading crashes.
 let aiClient: GoogleGenAI | null = null;
 
 const getAiClient = (): GoogleGenAI | null => {
@@ -43,6 +49,11 @@ const createSystemInstruction = (config: AppConfig): string => {
   `;
 
   if (config.userRole === Role.COACH) {
+    let toneInstruction = '';
+    if (config.persona.gender === 'LGBTQ+') {
+      toneInstruction = "Adopt a lively, expressive, sassy tone (channeling a 'Queen' persona). Use colorful expressions while remaining realistic to the professional context.";
+    }
+
     // User is Coach, AI is Coachee
     return `
       ${langInstruction}
@@ -60,6 +71,7 @@ const createSystemInstruction = (config: AppConfig): string => {
       - Do NOT act as an AI. Act strictly as the human persona described above.
       - Be realistic. Do not give up all information at once.
       - Show appropriate emotions (hesitation, defensiveness, or eagerness) based on the context.
+      - ${toneInstruction}
       - INTERACTION LOGIC:
         - If the Coach (User) asks clarifying questions or reflects your feelings (Empathy), acknowledge them warmly, lower your defensiveness, and elaborate on your internal thoughts and feelings.
         - If the Coach asks "Why" questions aggressively, become slightly defensive or withdrawn.

@@ -14,12 +14,14 @@ const Configuration: React.FC<Props> = ({ onStart, theme, language }) => {
   const [userRole, setUserRole] = useState<Role>(Role.COACH);
   const [interactionType, setInteractionType] = useState<InteractionType>('TEXT');
   const [model, setModel] = useState<CoachingModel>(CoachingModel.GROW);
+  
+  // Updated Default Values
   const [persona, setPersona] = useState<Persona>({
-    gender: 'Female',
-    age: '30-35',
-    profession: 'Marketing',
-    position: 'Manager',
-    topic: 'Struggling with work-life balance and burnout.',
+    gender: 'Male', // Default: Male
+    age: '26-35',   // Default: 26-35
+    profession: 'ครู', // Teacher
+    position: 'หัวหน้ากลุ่มสาระ', // Head of Department
+    topic: 'หมดไฟกับงาน จนแบ่งเวลาชีวิตส่วนตัวไม่ถูก', // Burnout context
   });
 
   const t = TRANSLATIONS[language];
@@ -154,9 +156,9 @@ const Configuration: React.FC<Props> = ({ onStart, theme, language }) => {
                   value={persona.gender}
                   onChange={(e) => setPersona({ ...persona, gender: e.target.value })}
                 >
-                  <option>Male</option>
-                  <option>Female</option>
-                  <option>Non-binary</option>
+                  <option value="Male">ชาย (Male)</option>
+                  <option value="Female">หญิง (Female)</option>
+                  <option value="LGBTQ+">LGBTQ+</option>
                 </select>
               </div>
               <div>
@@ -180,7 +182,7 @@ const Configuration: React.FC<Props> = ({ onStart, theme, language }) => {
                   required
                   className={inputClass}
                   style={{ '--tw-ring-color': theme.secondary } as React.CSSProperties}
-                  placeholder="e.g. Software Engineer, HR, Sales"
+                  placeholder="e.g. ครู, Engineer, HR"
                   value={persona.profession}
                   onChange={(e) => setPersona({ ...persona, profession: e.target.value })}
                 />
@@ -192,7 +194,7 @@ const Configuration: React.FC<Props> = ({ onStart, theme, language }) => {
                   required
                   className={inputClass}
                   style={{ '--tw-ring-color': theme.secondary } as React.CSSProperties}
-                  placeholder="e.g. Team Lead, Junior Associate"
+                  placeholder="e.g. หัวหน้ากลุ่มสาระ, Manager"
                   value={persona.position}
                   onChange={(e) => setPersona({ ...persona, position: e.target.value })}
                 />

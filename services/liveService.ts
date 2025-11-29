@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, LiveServerMessage, Modality, Blob } from '@google/genai';
 import { AppConfig, Role, ChatMessage } from '../types';
 
@@ -19,8 +20,15 @@ interface Callbacks {
 // Safely get API Key
 const getApiKey = () => {
   try {
-    if (typeof process !== 'undefined' && process.env) {
-      return process.env.API_KEY || '';
+    // 1. Check window.process (browser polyfill)
+    if (typeof window !== 'undefined' && (window as any).process?.env?.API_KEY) {
+      return (window as any).process.env.API_KEY;
+    }
+    // 2. Check global process (if defined via var/const)
+    // @ts-ignore
+    if (typeof process !== 'undefined' && process.env?.API_KEY) {
+      // @ts-ignore
+      return process.env.API_KEY;
     }
   } catch (e) {
     // Ignore
@@ -128,9 +136,10 @@ export const createLiveSession = (
           case 'Female':
             voiceName = 'Kore'; // Standard female
             break;
+          case 'LGBTQ+':
           case 'Non-binary':
             voiceName = 'Puck'; // Playful, higher range
-            // Specific instruction for Non-binary "Gay queen" persona
+            // Specific instruction for LGBTQ+ "Gay queen" persona
             toneInstruction = "Adopt a lively, expressive, sassy tone (channeling a 'Queen' persona). Use colorful expressions while remaining realistic to the professional context.";
             break;
           default:

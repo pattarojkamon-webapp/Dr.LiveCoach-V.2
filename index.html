@@ -17,6 +17,8 @@
     <!-- Polyfill for process.env to avoid ReferenceError: process is not defined -->
     <script>
       window.process = window.process || { env: {} };
+      // Explicitly define global process variable for direct access
+      var process = window.process;
     </script>
     <script type="importmap">
     {
