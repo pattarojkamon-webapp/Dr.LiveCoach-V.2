@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppConfig, CoachingModel, Role, Persona, Theme, Language, InteractionType } from '../types';
 import { TRANSLATIONS } from '../constants';
-import { User, Briefcase, MessageSquare, PlayCircle, Settings, Mic, MessageCircle } from 'lucide-react';
+import { getApiKey } from '../services/geminiService';
+import { User, Briefcase, MessageSquare, PlayCircle, Settings, Mic, MessageCircle, Key, AlertCircle } from 'lucide-react';
 
 interface Props {
   onStart: (config: AppConfig) => void;
@@ -15,7 +16,11 @@ const Configuration: React.FC<Props> = ({ onStart, theme, language }) => {
   const [interactionType, setInteractionType] = useState<InteractionType>('TEXT');
   const [model, setModel] = useState<CoachingModel>(CoachingModel.GROW);
   
-  // Updated Default Values
+  // API Key Fallback Logic
+  const [needsApiKey, setNeedsApiKey] = useState(false);
+  const [manualApiKey, setManualApiKey] = useState('');
+
+  // Default Values
   const [persona, setPersona] = useState<Persona>({
     gender: 'Male', // Default: Male
     age: '26-35',   // Default: 26-35
@@ -26,9 +31,24 @@ const Configuration: React.FC<Props> = ({ onStart, theme, language }) => {
 
   const t = TRANSLATIONS[language];
 
+  // Check for API Key on mount
+  useEffect(() => {
+    const key = getApiKey();
+    if (!key) {
+      setNeedsApiKey(true);
+    }
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onStart({ userRole, persona, model, language, interactionType });
+    onStart({ 
+      userRole, 
+      persona, 
+      model, 
+      language, 
+      interactionType,
+      apiKey: needsApiKey ? manualApiKey : undefined 
+    });
   };
 
   // Input common style
@@ -56,6 +76,32 @@ const Configuration: React.FC<Props> = ({ onStart, theme, language }) => {
 
         <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-8">
           
+          {/* API KEY FALLBACK UI: Only shows if system env var is missing */}
+          {needsApiKey && (
+            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 animate-fade-in">
+               <div className="flex items-start gap-3">
+                 <div className="p-2 bg-amber-100 rounded-full text-amber-600">
+                    <AlertCircle size={20} />
+                 </div>
+                 <div className="flex-1">
+                   <h3 className="text-sm font-bold text-amber-800 uppercase tracking-wide mb-1">{t.apiKeyRequired}</h3>
+                   <p className="text-sm text-amber-700 mb-3">{t.apiKeyDesc}</p>
+                   <div className="relative">
+                     <Key className="absolute left-3 top-3 text-amber-400 w-4 h-4" />
+                     <input
+                       type="text"
+                       required
+                       className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-amber-200 bg-white focus:ring-2 focus:ring-amber-500/20 outline-none text-slate-800 text-sm"
+                       placeholder={t.apiKeyPlaceholder}
+                       value={manualApiKey}
+                       onChange={(e) => setManualApiKey(e.target.value)}
+                     />
+                   </div>
+                 </div>
+               </div>
+            </div>
+          )}
+
           {/* Interaction Mode Selection */}
           <div className="space-y-4">
              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -248,7 +294,8 @@ const Configuration: React.FC<Props> = ({ onStart, theme, language }) => {
           <div className="pt-6">
             <button
               type="submit"
-              className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-xl text-white font-bold text-lg shadow-xl shadow-slate-200 hover:brightness-110 hover:shadow-2xl transition-all active:scale-[0.99]"
+              disabled={needsApiKey && !manualApiKey}
+              className="w-full flex items-center justify-center gap-2 py-4 px-6 rounded-xl text-white font-bold text-lg shadow-xl shadow-slate-200 hover:brightness-110 hover:shadow-2xl transition-all active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ background: theme.gradient }}
             >
               <PlayCircle className="w-6 h-6" />

@@ -3,32 +3,42 @@ import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { AppConfig, ChatMessage, EvaluationResult, Role } from "../types";
 import { MOCK_EVALUATION } from "../constants";
 
-// SAFELY ACCESS API KEY
-const getApiKey = () => {
+// SAFELY ACCESS API KEY with support for various build tool prefixes
+export const getApiKey = () => {
+  let key = '';
   try {
-    // 1. Check window.process (browser polyfill)
+    // 1. Check window.process (legacy polyfill)
     if (typeof window !== 'undefined' && (window as any).process?.env?.API_KEY) {
-      return (window as any).process.env.API_KEY;
+      key = (window as any).process.env.API_KEY;
     }
     // 2. Check global process (if defined via var/const)
     // @ts-ignore
-    if (typeof process !== 'undefined' && process.env?.API_KEY) {
+    if (!key && typeof process !== 'undefined' && process.env) {
       // @ts-ignore
-      return process.env.API_KEY;
+      key = process.env.API_KEY || process.env.REACT_APP_API_KEY || process.env.NEXT_PUBLIC_API_KEY;
+    }
+    // 3. Check Vite import.meta.env
+    // @ts-ignore
+    if (!key && typeof import.meta !== 'undefined' && import.meta.env) {
+      // @ts-ignore
+      key = import.meta.env.VITE_API_KEY || import.meta.env.API_KEY;
     }
   } catch (e) {
-    console.warn("Could not access API Key safely:", e);
+    console.warn("Could not access environment variables safely:", e);
   }
-  return '';
+  return key;
 };
 
 // Lazy Initialization of AI Client
 let aiClient: GoogleGenAI | null = null;
 
-const getAiClient = (): GoogleGenAI | null => {
-  if (aiClient) return aiClient;
+// Allow passing a manual key override
+const getAiClient = (apiKeyOverride?: string): GoogleGenAI | null => {
+  if (aiClient && !apiKeyOverride) return aiClient;
 
-  const key = getApiKey();
+  // Prioritize override, then robust detection
+  const key = apiKeyOverride || getApiKey();
+
   if (key) {
     try {
       aiClient = new GoogleGenAI({ apiKey: key });
@@ -46,6 +56,8 @@ const createSystemInstruction = (config: AppConfig): string => {
     If the language is TH (Thai), answer in Thai.
     If the language is CN (Chinese), answer in Chinese.
     If the language is EN (English), answer in English.
+    
+    IMPORTANT: Ensure that your Thai grammar is natural, polite, and formally correct (ภาษาไทยที่ถูกต้อง เป็นธรรมชาติ ถูกหลักไวยากรณ์). Avoid direct machine translation phrasing.
   `;
 
   if (config.userRole === Role.COACH) {
@@ -108,7 +120,7 @@ export const generateReply = async (
   history: ChatMessage[],
   config: AppConfig
 ): Promise<string> => {
-  const ai = getAiClient();
+  const ai = getAiClient(config.apiKey);
   const isMockMode = !ai;
 
   if (isMockMode) {
@@ -150,7 +162,7 @@ export const generateEvaluation = async (
   history: ChatMessage[],
   config: AppConfig
 ): Promise<EvaluationResult> => {
-  const ai = getAiClient();
+  const ai = getAiClient(config.apiKey);
   const isMockMode = !ai;
 
   if (isMockMode) {
@@ -183,6 +195,7 @@ export const generateEvaluation = async (
     Also provide a short summary paragraph.
     
     IMPORTANT: The Output text (summary, strengths, etc.) MUST be in ${config.language} language.
+    IMPORTANT: Use formal, grammatically correct language (ใช้ภาษาทางการและถูกต้องตามหลักไวยากรณ์).
   `;
 
   const schema: Schema = {

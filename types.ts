@@ -39,6 +39,7 @@ export interface AppConfig {
   model: CoachingModel;
   language: Language;
   interactionType: InteractionType;
+  apiKey?: string; // Added: Optional API Key for fallback mode
 }
 
 export interface ChatMessage {

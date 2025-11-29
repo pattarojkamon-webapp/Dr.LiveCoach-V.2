@@ -215,6 +215,12 @@ export const TRANSLATIONS: Record<Language, any> = {
     timeElapsed: "Elapsed",
     footerCopyright: "© 2025 Dr.Pattaroj Kamonrojsiri. All rights reserved.",
     guideBtn: "User Guide",
+    transcriptUser: "You",
+    transcriptModel: "AI",
+    // Fallback UI
+    apiKeyRequired: "API Key Required",
+    apiKeyDesc: "System could not detect an API Key (common in some deployment environments). Please enter your Gemini API Key to proceed.",
+    apiKeyPlaceholder: "Paste your Gemini API Key here (starts with AIza...)",
   },
   TH: {
     title: "Dr.LiveCoach",
@@ -272,6 +278,12 @@ export const TRANSLATIONS: Record<Language, any> = {
     timeElapsed: "เวลา",
     footerCopyright: "© 2025 Dr.Pattaroj Kamonrojsiri. All rights reserved.",
     guideBtn: "คู่มือการใช้งาน",
+    transcriptUser: "คุณ",
+    transcriptModel: "AI",
+    // Fallback UI
+    apiKeyRequired: "จำเป็นต้องใช้ API Key",
+    apiKeyDesc: "ระบบไม่พบ API Key (อาจเกิดจากการตั้งค่า Deploy) กรุณากรอก Gemini API Key ของคุณเพื่อใช้งาน",
+    apiKeyPlaceholder: "วาง Gemini API Key ที่นี่ (ขึ้นต้นด้วย AIza...)",
   },
   CN: {
     title: "Dr.LiveCoach",
@@ -329,5 +341,11 @@ export const TRANSLATIONS: Record<Language, any> = {
     timeElapsed: "用时",
     footerCopyright: "© 2025 Dr.Pattaroj Kamonrojsiri. All rights reserved.",
     guideBtn: "使用指南",
+    transcriptUser: "你",
+    transcriptModel: "AI",
+    // Fallback UI
+    apiKeyRequired: "需输入 API Key",
+    apiKeyDesc: "系统未检测到 API Key。请输入您的 Gemini API Key 以继续。",
+    apiKeyPlaceholder: "在此粘贴 Gemini API Key (以 AIza 开头...)",
   }
 };

@@ -17,32 +17,36 @@ interface Callbacks {
   onAudioActivity: (isUserSpeaking: boolean) => void;
 }
 
-// Safely get API Key
+// Safely get API Key with support for Vercel/Vite prefixes
 const getApiKey = () => {
+  let key = '';
   try {
-    // 1. Check window.process (browser polyfill)
     if (typeof window !== 'undefined' && (window as any).process?.env?.API_KEY) {
-      return (window as any).process.env.API_KEY;
+      key = (window as any).process.env.API_KEY;
     }
-    // 2. Check global process (if defined via var/const)
     // @ts-ignore
-    if (typeof process !== 'undefined' && process.env?.API_KEY) {
+    if (!key && typeof process !== 'undefined' && process.env) {
       // @ts-ignore
-      return process.env.API_KEY;
+      key = process.env.API_KEY || process.env.REACT_APP_API_KEY || process.env.NEXT_PUBLIC_API_KEY;
+    }
+    // @ts-ignore
+    if (!key && typeof import.meta !== 'undefined' && import.meta.env) {
+      // @ts-ignore
+      key = import.meta.env.VITE_API_KEY || import.meta.env.API_KEY;
     }
   } catch (e) {
     // Ignore
   }
-  return '';
+  return key;
 };
 
 export const createLiveSession = (
   config: AppConfig,
   callbacks: Callbacks
 ): LiveSessionController => {
-  const apiKey = getApiKey();
+  // Use config key if provided (manual entry), otherwise try env detection
+  const apiKey = config.apiKey || getApiKey();
   
-  // We check API key inside connect to allow cleaner error handling flow
   const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
   let sessionPromise: Promise<any> | null = null;
