@@ -3,25 +3,35 @@ import { AppConfig, ChatMessage, EvaluationResult, Role } from "../types";
 import { MOCK_EVALUATION } from "../constants";
 
 // SAFELY ACCESS API KEY
-// We check if 'process' is defined to avoid "ReferenceError: process is not defined" in browsers
 const getApiKey = () => {
   try {
+    // Check global process first (polyfilled in index.html)
     if (typeof process !== 'undefined' && process.env) {
       return process.env.API_KEY || '';
     }
   } catch (e) {
-    // Ignore error if process is not available
+    console.warn("Could not access process.env");
   }
   return '';
 };
 
-const apiKey = getApiKey();
-const isMockMode = !apiKey;
+// Lazy Initialization of AI Client
+// We do NOT create the client at the top level to prevent module loading crashes.
+let aiClient: GoogleGenAI | null = null;
 
-let ai: GoogleGenAI | null = null;
-if (!isMockMode) {
-  ai = new GoogleGenAI({ apiKey });
-}
+const getAiClient = (): GoogleGenAI | null => {
+  if (aiClient) return aiClient;
+
+  const key = getApiKey();
+  if (key) {
+    try {
+      aiClient = new GoogleGenAI({ apiKey: key });
+    } catch (error) {
+      console.error("Failed to initialize GoogleGenAI client:", error);
+    }
+  }
+  return aiClient;
+};
 
 // Helper to construct the system prompt
 const createSystemInstruction = (config: AppConfig): string => {
@@ -86,6 +96,9 @@ export const generateReply = async (
   history: ChatMessage[],
   config: AppConfig
 ): Promise<string> => {
+  const ai = getAiClient();
+  const isMockMode = !ai;
+
   if (isMockMode) {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -93,8 +106,6 @@ export const generateReply = async (
       }, 1000);
     });
   }
-
-  if (!ai) throw new Error("AI client not initialized");
 
   try {
     const systemInstruction = createSystemInstruction(config);
@@ -105,6 +116,7 @@ export const generateReply = async (
       parts: [{ text: msg.text }],
     }));
 
+    // @ts-ignore
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: contents,
@@ -126,6 +138,9 @@ export const generateEvaluation = async (
   history: ChatMessage[],
   config: AppConfig
 ): Promise<EvaluationResult> => {
+  const ai = getAiClient();
+  const isMockMode = !ai;
+
   if (isMockMode) {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -133,8 +148,6 @@ export const generateEvaluation = async (
       }, 2000);
     });
   }
-
-  if (!ai) throw new Error("AI client not initialized");
 
   const conversationText = history
     .map((m) => `${m.role.toUpperCase()}: ${m.text}`)
@@ -193,6 +206,7 @@ export const generateEvaluation = async (
   };
 
   try {
+    // @ts-ignore
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [
