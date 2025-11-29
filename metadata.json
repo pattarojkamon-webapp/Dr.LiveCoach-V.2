@@ -1,0 +1,7 @@
+{
+  "name": "Dr.LiveCoach V.2",
+  "description": "A professional Real-time Coaching Simulator for corporate training and personal development, featuring AI-driven roleplay and comprehensive performance evaluation.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
